@@ -2,7 +2,7 @@
 
 ---
 
-- `Concept`
+- Concept
 
 
        In control engineering, controlling with delayed control input is a classic problem.
