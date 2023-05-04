@@ -8,8 +8,8 @@
 
       On custom inverted pendulum :
       
-        sampling time 
-        sampling time 50ms -> 5 sample delayed allowed
+        sampling time 20ms -> 12 sample --- 2.4s
+        sampling time 50ms -> 5 sample  --- 2.5s
         
         # hyperparameters #
         
