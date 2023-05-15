@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import utils
-import sys
 from noisynetwork import *
 
 class NOISYCritic(nn.Module):
@@ -218,7 +217,6 @@ class Twin_Q_net(nn.Module):
         return x, u
 
     def forward(self, state, action):
-        import sys
         x, u = self._format(state, action)
         x = torch.cat([x, u], dim=1).to(torch.float32)
 

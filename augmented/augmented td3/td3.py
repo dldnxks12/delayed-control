@@ -1,7 +1,5 @@
 import torch
-import torch.nn.functional as F
 
-import sys
 import utils
 import numpy as np
 import network
@@ -45,9 +43,9 @@ class TD3:
 
         elif self.net_name == 'jang':
             # Jangs network
-            self.actor         = network.Policy(self.state_dim,  self.action_dim, self.action_bound, self.device)
+            self.actor         = network.Policy(self.state_dim, self.action_dim, self.action_bound, self.device)
             self.critic        = network.Twin_Q_net(self.state_dim, self.action_dim, self.device)
-            self.target_actor  = network.Policy(self.state_dim,  self.action_dim, self.action_bound, self.device)
+            self.target_actor  = network.Policy(self.state_dim, self.action_dim, self.action_bound, self.device)
             self.target_critic = network.Twin_Q_net(self.state_dim, self.action_dim, self.device)
 
         else:
