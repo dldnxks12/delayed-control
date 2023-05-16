@@ -142,6 +142,8 @@ def update_agent(rollouts): # rollouts ==== episodes
     max_length = torch.sqrt(2 * max_d_kl / (search_dir @ HVP(search_dir)))
     max_step = max_length * search_dir
 
+    # 위 Conjugate gradient로 search direction get
+    # 아래 line search로 step size get
     def criterion(step):
         apply_update(step)
 
@@ -153,7 +155,6 @@ def update_agent(rollouts): # rollouts ==== episodes
             L_new = surrogate_loss(probabilities_new, probabilities, advantages)
             KL_new = kl_div(distribution, distribution_new)
 
-        # Line search
         L_improvement = L_new - L
 
         if L_improvement > 0 and KL_new <= max_d_kl:
@@ -203,6 +204,8 @@ def flat_grad(y, x, retain_graph=False, create_graph=False):
     # b = g  : ∇L
     # def HVP(v): # Hessian-Vector Product , @ -> matrix multiplier
     #     return flat_grad(d_kl @ v, parameters, retain_graph=True)
+
+    # ref : https://sungwookyoo.github.io/study/conjugate_gradient/
 def conjugate_gradient(A, b, delta=0., max_iterations=10): # ok
     x = torch.zeros_like(b)
     r = b.clone()  # residual
