@@ -1,3 +1,5 @@
+# https://medium.com/@vladogim97/trpo-minimal-pytorch-implementation-859e46c4232e#4e66
+
 import gym
 import numpy as np
 import torch
@@ -14,7 +16,6 @@ num_actions = env.action_space.n
 
 Rollout = namedtuple('Rollout', ['states', 'actions', 'rewards', 'next_states', ])
 
-
 def train(epochs=100, num_rollouts=10, render_frequency=None):
     mean_total_rewards = []
     global_rollout = 0
@@ -23,12 +24,13 @@ def train(epochs=100, num_rollouts=10, render_frequency=None):
         rollouts = []
         rollout_total_rewards = []
 
-        for t in range(num_rollouts):
+        for t in range(num_rollouts):  # num_rollouts = num_episodes
             state = env.reset()[0]
             done = False
 
             samples = []
 
+            # Start New Episode ...
             while not done:
                 if render_frequency is not None and global_rollout % render_frequency == 0:
                     env.render()
@@ -43,13 +45,15 @@ def train(epochs=100, num_rollouts=10, render_frequency=None):
 
                 state = next_state
 
+            # Episode Done ...
+
             # Transpose our samples
             states, actions, rewards, next_states = zip(*samples)
 
-            states = torch.stack([torch.from_numpy(state) for state in states], dim=0).float()
-            next_states = torch.stack([torch.from_numpy(state) for state in next_states], dim=0).float()
-            actions = torch.as_tensor(actions).unsqueeze(1)
-            rewards = torch.as_tensor(rewards).unsqueeze(1)
+            states      = torch.stack([torch.from_numpy(state)      for state      in states],      dim=0).float()
+            next_states = torch.stack([torch.from_numpy(next_state) for next_state in next_states], dim=0).float()
+            actions     = torch.as_tensor(actions).unsqueeze(1)
+            rewards     = torch.as_tensor(rewards).unsqueeze(1)
 
             rollouts.append(Rollout(states, actions, rewards, next_states))
 
@@ -73,13 +77,6 @@ actor = nn.Sequential(nn.Linear(state_size, actor_hidden),
                       nn.Softmax(dim=1))
 
 
-import sys
-def get_action(state):
-    state = torch.tensor(state).float().unsqueeze(0)  # Turn state into a batch with a single element
-    dist = Categorical(actor(state))  # Create a distribution from probabilities for actions
-    return dist.sample().item()
-
-
 # Critic takes a state and returns its values
 critic_hidden = 32
 critic = nn.Sequential(nn.Linear(state_size, critic_hidden),
@@ -87,8 +84,15 @@ critic = nn.Sequential(nn.Linear(state_size, critic_hidden),
                        nn.Linear(critic_hidden, 1))
 critic_optimizer = Adam(critic.parameters(), lr=0.005)
 
+import sys
+def get_action(state): # ok
+    state = torch.tensor(state).float().unsqueeze(0)  # Turn state into a batch with a single element
+    # actor(state) -> softmax 결과
+    dist = Categorical(actor(state))  # Create a distribution from probabilities for actions
+    return dist.sample().item()       # softmax result에 따라 sampling π(-|s)
 
-def update_critic(advantages):
+
+def update_critic(advantages): # ok
     loss = .5 * (advantages ** 2).mean()  # MSE
     critic_optimizer.zero_grad()
     loss.backward()
@@ -98,12 +102,12 @@ def update_critic(advantages):
 # delta, maximum KL divergence
 max_d_kl = 0.01
 
-
-def update_agent(rollouts):
-    states = torch.cat([r.states for r in rollouts], dim=0)
+def update_agent(rollouts): # rollouts ==== episodes
+    states = torch.cat([r.states for r in rollouts],   dim=0)
     actions = torch.cat([r.actions for r in rollouts], dim=0).flatten()
 
-    advantages = [estimate_advantages(states, next_states[-1], rewards) for states, _, rewards, next_states in rollouts]
+    #  rollout : state, action, reward, next_state
+    advantages = [estimate_advantages(states, next_states[-1], rewards) for states, _ , rewards, next_states in rollouts]
     advantages = torch.cat(advantages, dim=0).flatten()
 
     # Normalize advantages to reduce skewness and improve convergence
@@ -124,7 +128,7 @@ def update_agent(rollouts):
 
     parameters = list(actor.parameters())
 
-    g = flat_grad(L, parameters, retain_graph=True)
+    g    = flat_grad(L, parameters, retain_graph=True)
     d_kl = flat_grad(KL, parameters, create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
 
     def HVP(v):
@@ -145,6 +149,7 @@ def update_agent(rollouts):
             L_new = surrogate_loss(probabilities_new, probabilities, advantages)
             KL_new = kl_div(distribution, distribution_new)
 
+        # Line search
         L_improvement = L_new - L
 
         if L_improvement > 0 and KL_new <= max_d_kl:
@@ -168,10 +173,12 @@ def estimate_advantages(states, last_state, rewards):
     return advantages
 
 
+# OK
 def surrogate_loss(new_probabilities, old_probabilities, advantages):
     return (new_probabilities / old_probabilities * advantages).mean()
 
 
+# OK
 def kl_div(p, q):
     p = p.detach()
     return (p * (p.log() - q.log())).sum(-1).mean()
