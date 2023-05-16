@@ -117,7 +117,7 @@ def update_agent(rollouts): # rollouts ==== episodes
 
     distribution = actor(states)
     distribution = torch.distributions.utils.clamp_probs(distribution)
-    probabilities = distribution[range(distribution.shape[0]), actions]
+    probabilities = distribution[range(distribution.shape[0]), actions] # 선택된 action에 대한 확률만 get
 
     # Now we have all the data we need for the algorithm
 
@@ -128,10 +128,14 @@ def update_agent(rollouts): # rollouts ==== episodes
 
     parameters = list(actor.parameters())
 
+    # L을 parameter에 대해 미분 -> flatten  -- retain_graph = True -> graph 유지
     g    = flat_grad(L, parameters, retain_graph=True)
+
+    # KL을 parameter에 대해 미분 -> flatten -- create_graph = True -> 미분할 graph 생성
     d_kl = flat_grad(KL, parameters, create_graph=True)  # Create graph, because we will call backward() on it (for HVP)
 
-    def HVP(v):
+    # OK - ref to hessian_vector_product.py
+    def HVP(v): # Hessian-Vector Product , @ -> matrix multiplier
         return flat_grad(d_kl @ v, parameters, retain_graph=True)
 
     search_dir = conjugate_gradient(HVP, g)
@@ -162,13 +166,13 @@ def update_agent(rollouts): # rollouts ==== episodes
     while not criterion((0.9 ** i) * max_step) and i < 10:
         i += 1
 
-
 def estimate_advantages(states, last_state, rewards):
     values = critic(states)
     last_value = critic(last_state.unsqueeze(0))
     next_values = torch.zeros_like(rewards)
     for i in reversed(range(rewards.shape[0])):
         last_value = next_values[i] = rewards[i] + 0.99 * last_value
+
     advantages = next_values - values
     return advantages
 
@@ -184,19 +188,25 @@ def kl_div(p, q):
     return (p * (p.log() - q.log())).sum(-1).mean()
 
 
+# OK
 def flat_grad(y, x, retain_graph=False, create_graph=False):
     if create_graph:
         retain_graph = True
 
+    # y를 x에 대해 미분
     g = torch.autograd.grad(y, x, retain_graph=retain_graph, create_graph=create_graph)
     g = torch.cat([t.view(-1) for t in g])
     return g
 
 
-def conjugate_gradient(A, b, delta=0., max_iterations=10):
+    # A = HVP  Hessian-vector product function
+    # b = g  : ∇L
+    # def HVP(v): # Hessian-Vector Product , @ -> matrix multiplier
+    #     return flat_grad(d_kl @ v, parameters, retain_graph=True)
+def conjugate_gradient(A, b, delta=0., max_iterations=10): # ok
     x = torch.zeros_like(b)
-    r = b.clone()
-    p = b.clone()
+    r = b.clone()  # residual
+    p = b.clone()  # search direction v
 
     i = 0
     while i < max_iterations:
@@ -213,6 +223,7 @@ def conjugate_gradient(A, b, delta=0., max_iterations=10):
         i += 1
         r = r - alpha * AVP
 
+        # direction update - like gram-schmidt
         beta = (r @ r) / dot_old
         p = r + beta * p
 
@@ -223,7 +234,7 @@ def conjugate_gradient(A, b, delta=0., max_iterations=10):
 def apply_update(grad_flattened):
     n = 0
     for p in actor.parameters():
-        numel = p.numel()
+        numel = p.numel() # p.numel() = tensor의 크기 구하기
         g = grad_flattened[n:n + numel].view(p.shape)
         p.data += g
         n += numel
