@@ -18,7 +18,7 @@ def main():
 
     """
     sampling time : 10ms ---- 
-    sampling time : 20ms ---- 12 sample ok (2.4s)
+    sampling time : 20ms ---- 13 sample ok (2.6s)
     sampling time : 30ms ---- 
     sampling time : 40ms ---- 
     sampling time : 50ms ---- 5 sample ok (2.5s)
