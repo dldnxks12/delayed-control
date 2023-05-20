@@ -8,7 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import gymnasium as gym
+#import gymnasium as gym
+import gym
 
 from torch.distributions import Categorical
 
@@ -51,6 +52,8 @@ class PPO(nn.Module):
         for transition in self.data:
             s, a, r, s_prime, prob_a, done = transition
 
+            print(type(s))
+            sys.exit()
             states.append(s)
             actions.append([a])
             rewards.append([r])
