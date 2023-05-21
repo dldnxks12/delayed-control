@@ -19,15 +19,15 @@ class ActorCritic(nn.Module):
 
         self.data   = []
         self.epochs = 10
-        self.eps    = 0.2  # clipping ratio
+        self.eps    = 0.1  # clipping ratio
         self.lamd   = 0.9
         self.gamma  = 0.9
         self.learning_rate = 0.0003
 
-        self.fc1    = nn.Linear(state_dim, 256)
-        self.fc_mu  = nn.Linear(256, action_dim)
-        self.fc_std = nn.Linear(256, action_dim)
-        self.fc_v   = nn.Linear(256, 1)
+        self.fc1    = nn.Linear(state_dim, 128)
+        self.fc_mu  = nn.Linear(128, action_dim)
+        self.fc_std = nn.Linear(128, action_dim)
+        self.fc_v   = nn.Linear(128, 1)
 
         self.optimizer = optim.Adam(self.parameters(), lr = self.learning_rate)
 
@@ -66,6 +66,9 @@ class ActorCritic(nn.Module):
         dones = b_done
         probs = b_log_old_probs
 
+        states      = np.array(np.stack(states,      axis=0))
+        next_states = np.array(np.stack(next_states, axis=0))
+
         states  = torch.tensor(states, dtype=torch.float)
         actions = torch.tensor(actions)
         rewards = torch.tensor(rewards)
@@ -77,7 +80,7 @@ class ActorCritic(nn.Module):
 
         return states, actions, rewards, next_states, probs, dones
 
-    def gae_td_taeget(self, states, actions, rewards, next_states, dones):
+    def gae_td_target(self, states, actions, rewards, next_states, dones):
         with torch.no_grad():
             td_targets = rewards + self.gamma*self.v(next_states)*dones
             deltas     = td_targets - self.v(states)
@@ -98,13 +101,21 @@ class ActorCritic(nn.Module):
 
         for _ in range(self.epochs):
             # Calc GAE / td_target inside here
-            GAEs, td_targets = self.gae_td_taeget(states, actions, rewards, next_states, dones)
-            mu_new, std_new  = self.pi(states)
+            GAEs, td_targets = self.gae_td_target(states, actions, rewards, next_states, dones)
+
+            actions = actions.unsqueeze(1)
+            old_log_probs = old_log_probs.unsqueeze(1)
+
+            mu_new, std_new  = self.pi(states)  # ok
             new_dist         = Normal(mu_new, std_new)
             new_log_probs    = new_dist.log_prob(actions)
 
-            ratio      = torch.exp(new_log_probs - old_log_probs)
+            # torch.Size([5, 1]) torch.Size([5]) torch.Size([5, 1])
+            #print(new_log_probs.shape, old_log_probs.shape, GAEs.shape)
+            #print(new_log_probs, old_log_probs, GAEs)
+            #sys.exit()
 
+            ratio      = torch.exp(new_log_probs - old_log_probs)
             surrogate1 = ratio * GAEs
             surrogate2 = torch.clamp(ratio, 1-self.eps, 1+self.eps) * GAEs
             loss = -torch.min(surrogate1, surrogate2) + F.smooth_l1_loss(self.v(states), td_targets.detach())
