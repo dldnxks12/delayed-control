@@ -33,15 +33,20 @@ class PPOagent(nn.Module):
             while not done:
                 for _ in range(self.rollout_len):
                     mu_old, std_old = self.network.pi(torch.FloatTensor(state).to(self.device))
-
                     dist = Normal(mu_old, std_old)
-                    action = dist.sample()
-                    old_log_prob = dist.log_prob(action)
+                    action = dist.sample() # grad x
+                    old_log_prob = dist.log_prob(action) # grad o
 
-                    next_state, reward, terminated, truncated, _ = self.env.step(action)
+                    # print(action, [action.item()])
+                    # action : -0.9288
+                    # [action.item()] : [-0.928832471370697]
+
+                    next_state, reward, terminated, truncated, _ = self.env.step([action.item()])
                     done  = terminated or truncated
 
-                    rollout.append((state, action, reward/10.0, next_state, old_log_prob, done))
+                    #print(old_log_prob, old_log_prob.item())
+
+                    rollout.append((state, action, reward/10.0, next_state, old_log_prob.item(), done))
 
                     if len(rollout) == self.rollout_len:
                         self.network.put_data(rollout)
@@ -65,7 +70,7 @@ class PPOagent(nn.Module):
         self.env.close()
         plt.plot(self.save_epi_reward)
         sv = np.array(self.save_epi_reward)
-        np.save("./ppo_modi3.npy", sv)
+        np.save("./ppo_fix_1.npy", sv)
         plt.show()
 
 
