@@ -7,15 +7,13 @@ import utils
 
 import td3
 import trainer
-import torchsummary
-
 
 def main():
 
     device        = 'cuda' if torch.cuda.is_available() else 'cpu'
     device        = 'cpu'
-    random_seed   = 1
-    env_name      = "InvertedPendulum-v2"
+    random_seed   = 1234
+    env_name      = "HalfCheetah-v4"
     seed          = utils.set_seed(random_seed)
     env, env_eval = utils.make_env(env_name, seed)
 

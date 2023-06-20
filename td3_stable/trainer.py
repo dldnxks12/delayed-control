@@ -15,8 +15,8 @@ class Trainer:
         self.start_step   = 10000
         self.update_after = 1000
         self.max_step     = 3000000
-        self.batch_size   = 128
-        self.update_every = 50
+        self.batch_size   = 256
+        self.update_every = 25
         self.policy_update_delay = 2
 
         self.eval_flag          = True

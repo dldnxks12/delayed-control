@@ -58,7 +58,9 @@ parser.add_argument('--replay_size', type=int, default=1000000, metavar='N',
 args = parser.parse_args()
 
 # Environment
-env = gym.make(args.env_name, render_mode = 'human')
+env     = gym.make(args.env_name)
+env_vis = gym.make(args.env_name, render_mode = 'human')
+
 #env.seed(args.seed)
 env.action_space.seed(args.seed)
 
@@ -76,6 +78,10 @@ total_numsteps = 0
 updates        = 0
 
 for i_episode in itertools.count(1): # 1씩 증가시키는 무한 반복자
+
+    if i_episode > 100:
+        env = env_vis
+
     episode_reward = 0
     episode_steps  = 0
 

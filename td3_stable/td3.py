@@ -6,8 +6,8 @@ import utils
 import numpy as np
 import buffer
 import network
-import buffer2
-import torchsummary
+import buffer
+
 
 class TD3:
     def __init__(self, state_dim, action_dim, action_bound, device):
@@ -19,12 +19,12 @@ class TD3:
         self.device       = device
         self.capacity     = 1000000
         #self.memory       = buffer.ReplayBuffer(self.state_dim, self.action_dim, device, self.capacity)
-        self.memory = buffer2.ReplayMemory(self.state_dim, self.action_dim, device, self.capacity)
-        self.batch_size   = 128
+        self.memory = buffer.ReplayMemory(self.state_dim, self.action_dim, device, self.capacity)
+        self.batch_size   = 256
 
         self.act_noise_scale = 0.1
-        self.actor_lr        = 0.001
-        self.critic_lr       = 0.001
+        self.actor_lr        = 0.0001
+        self.critic_lr       = 0.0001
         self.gamma           = 0.99
         self.tau             = 0.005
 

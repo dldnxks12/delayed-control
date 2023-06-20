@@ -1,4 +1,4 @@
-#### `RL based delayed control`
+#### delayed control
 
 ---
 
@@ -10,5 +10,11 @@
        Actual experimental model is single, double, triple pendulum.
        
 
+        # Test candidates 
+
+            1. TD3
+            2. PPO
+            3. SAC 
+            4. Recurrent model
 
 
