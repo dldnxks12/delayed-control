@@ -86,6 +86,8 @@ class Trainer:
                 self.local_step += 1
                 self.total_step += 1
 
+
+
                 I = torch.concatenate([state.unsqueeze(0), torch.FloatTensor(act_buf[-d:]).unsqueeze(0)], dim = 1)
                 if self.total_step >= self.start_step:
                     action = np.array(self.agent.get_action(I, add_noise = True))
