@@ -120,7 +120,7 @@ class ActorCritic(nn.Module):
                 for mini_batch in data:
                     states, actions, rewards, next_states, old_log_probs, dones, td_targets, advantage = mini_batch
 
-                    actions = actions.unsqueeze(1)
+                    actions       = actions.unsqueeze(1)
                     old_log_probs = old_log_probs.unsqueeze(1)
 
                     mu_new, std_new  = self.pi(states)  # ok
