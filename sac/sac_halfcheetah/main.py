@@ -79,9 +79,6 @@ updates        = 0
 
 for i_episode in itertools.count(1): # 1씩 증가시키는 무한 반복자
 
-    if i_episode > 100:
-        env = env_vis
-
     episode_reward = 0
     episode_steps  = 0
 
